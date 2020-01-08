@@ -1,0 +1,9 @@
+There are 2 types of break points
+
+ 1. Software break points : by pressing F2 : They cause the processor to halt in the bedugger 
+                            whenever the thread attempts to execute a piece of code that you set a break point on.
+ 2. Hardware break points : These breakpoints can be used to break when any instruction try to attept to read, write or execute a specific address, 
+                            have limitation to set maximum of 4 memory break points.
+ **3. Memory break points : These are special software breakpoints that can be set on the memory olly has of a process
+ 
+ 

@@ -7,3 +7,23 @@ There are 2 types of break points
  **3. Memory break points : These are special software breakpoints that can be set on the memory olly has of a process
  
  
+---In More detailed Words---
+
+Hardware Breakpoints :
+
+A Hardware Breakpoint is really implemented by special logic that is integrated into the device. You can think of a hardware breakpoint as a set of programmable comparators that are connected to the program address bus. These comparators are programmed with a specific address value. When the code is executing, and all of the bits in the address on the program address bus match the bits programmed into the comparators, the Hardware breakpoint logic generates a signal to the CPU to Halt.
+
+The advantage of using a hardware breakpoint is that it can be used in any type of memory. This might make more sense after Software breakpoints are discussed. When we discuss software breakpoints, we will find that they are only usable in Volatile memory. Hardware Breakpoints can be used regardless of whether the code being executed is in RAM or ROM, because to the hardware breakpoint logic, there is no difference. It's just matching an address on the PAB and halting the CPU when it finds one.
+
+The disadvantage of the HWBP is, because they are implemented in hardware, there are a limited number available. The number of HWBPs available differ from architecture to architecture, but in most cases there are only 2-8 available. The simplest way to figure out how many a device has is to connect to it in CCS and keep setting HWBPs until you get an error message that there are none available.
+
+
+Software Breakpoints: 
+
+As mentioned, a Software Breakpoint is implemented in software. But how is that done? There are actually a 2 different implementations.
+
+Some devices reserve a specified bit in their opcode definition that indicates a Software breakpoint. As an example, in one architecture of the C6000 family, all instructions are 32 bits long, and bit 28 is reserved to indicate a software breakpoint, so all instructions in that instruction set have bit 28 as a zero. In this case, when a software breakpoint is set in CCS, it will actually modify the opcode of the instruction at that location and set bit 28 to a 1. The Emulation logic then monitors the Program Opcode for whenever bit 28 is a 1, and halts the CPU when that occurs. Note that this is a minority case. Most architectures don't do it this way. The reason is that it limits the flexibility of the instruction set. Also, it doesn't work for architectures that have variable length instructions, so it also limits code density.
+
+The more popular way of implementing a software breakpoint is also much more complex. In this scenario, there is a specified breakpoint opcode. Typically, the opcode is 8-bits. Whenever a breakpoint is set, the leading 8 bits of the instruction at that location are removed and replaced with this 8-bit breakpoint opcode. The original 8-bits of the instruction are then stored in a breakpoint table. Whenever a breakpoint is encountered, the CPU halts and CCS replaces the breakpoint opcode with the original 8-bits of the instruction. When execution is restarted, CCS must do a bit of trickery because the instruction in the actual CPU pipeline isn't correct. It still has the breakpoint opcode. So CCS flushes the CPU pipeline and then re-fetches the instructions that were pending in them to their original state, with the next function to be executed being the one where the breakpoint was set. At the same time, CCS re-loads the instruction at that location with the breakpoint opcode so that the next time this code is encountered, it will again halt.
+
+The advantage of the SWBP is that there is an unlimited number of them, so you can put them in as many places as you like. The disadvantage is that you can't put them in non-volatile memory like ROM/FLASH, etc, because CCS can't write the opcode to the location.
